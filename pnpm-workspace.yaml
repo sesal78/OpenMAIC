@@ -2,3 +2,11 @@ packages:
   - "packages/*"
   - "packages/@openmaic/*"
   - "!packages/docs" # standalone docs sub-app: own lockfile, build, deploy
+
+# Also fetch sharp's wasm32 build. sharp 0.35 prebuilt Linux x64 binaries require
+# the x86-64-v2 microarchitecture; on hosts without it (e.g. a VM with a generic
+# kvm64/qemu64 CPU model) sharp falls back to @img/sharp-wasm32 at runtime.
+supportedArchitectures:
+  cpu:
+    - current
+    - wasm32

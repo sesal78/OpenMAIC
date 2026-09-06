@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       // musl binaries and their libvips into the standalone output.
       'node_modules/.pnpm/@img+sharp-linuxmusl-x64@*/**',
       'node_modules/.pnpm/@img+sharp-libvips-linuxmusl-x64@*/**',
+      // wasm fallback for CPUs without x86-64-v2 (see pnpm-workspace.yaml).
+      'node_modules/.pnpm/@img+sharp-wasm32@*/**',
+      'node_modules/.pnpm/@emnapi+*/**',
+      'node_modules/.pnpm/tslib@*/**',
     ],
   },
   typescript: {
