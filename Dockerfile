@@ -107,6 +107,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Fail the build, not the deploy, if the standalone tree lost sharp/libvips.
+RUN node -e "require('sharp'); console.log('sharp loads OK')"
+
 USER nextjs
 
 EXPOSE 3000

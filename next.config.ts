@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
       'lib/server/agent-runtime/import-pptx-worker.mjs',
       'skills/openmaic/**',
       'skills/agent-runtime/**',
+      // sharp loads libvips via dlopen, which file tracing cannot see. On the
+      // Alpine (musl) Docker image the runner then fails with ERR_DLOPEN_FAILED
+      // (libvips-cpp.so not found) and the agent runtime never starts. Force the
+      // musl binaries and their libvips into the standalone output.
+      'node_modules/.pnpm/@img+sharp-linuxmusl-x64@*/**',
+      'node_modules/.pnpm/@img+sharp-libvips-linuxmusl-x64@*/**',
     ],
   },
   typescript: {
