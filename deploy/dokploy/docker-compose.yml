@@ -16,6 +16,9 @@
 services:
   openmaic:
     image: ghcr.io/sesal78/openmaic:${OPENMAIC_IMAGE_TAG:-tailnet}
+    # Re-pull on every redeploy so the moving :tailnet tag picks up new builds.
+    # Pin OPENMAIC_IMAGE_TAG=sha-<short> only to roll back or freeze a version.
+    pull_policy: always
     restart: unless-stopped
     env_file:
       - .env

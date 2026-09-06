@@ -8,18 +8,17 @@ exposure.
 
 1. Push to `feat/dokploy-tailnet-deploy` (or run the workflow manually) builds the image
    in GitHub Actions and pushes `:tailnet` + `:sha-<short>` tags to GHCR.
-2. In Dokploy, project **OpenMAIC** > compose **openmaic** > Environment: set
-   `OPENMAIC_IMAGE_TAG=sha-<short sha>` (printed by the workflow), then *Redeploy*.
-   Always pin the immutable `sha-` tag: `docker compose up` does not re-pull a moving
-   tag such as `:tailnet`, so redeploying on it silently keeps the old image.
-   Rollback = set the previous `sha-` tag and redeploy.
+2. In Dokploy, project **OpenMAIC** > compose **openmaic** > *Redeploy*. The compose
+   sets `pull_policy: always`, so the moving `:tailnet` tag is re-pulled each time.
+   Rollback / freeze = set `OPENMAIC_IMAGE_TAG=sha-<short>` (printed by the workflow)
+   in the Environment tab and redeploy; clear it to follow `:tailnet` again.
 
 ## Required env (Dokploy > compose > Environment)
 
 | Key | Notes |
 | --- | --- |
 | `POSTGRES_PASSWORD` | Postgres role password; only applied on first init of the volume |
-| `OPENMAIC_IMAGE_TAG` | immutable `sha-<short>` tag from the workflow run |
+| `OPENMAIC_IMAGE_TAG` | optional; default `tailnet` (latest build). Set `sha-<short>` to pin/roll back |
 | `OPENMAIC_AGENT_RUNTIME_ENABLED` | must be `true`: the home page lists courses via `/api/stages`, which 404s when the runtime is off |
 | `PERSISTENCE_DEV_TOKEN` | Must equal the build's `NEXT_PUBLIC_PERSISTENCE_TOKEN` (default `openmaic-tailnet-dev`) |
 | at least one LLM key | e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY` |
