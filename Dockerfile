@@ -80,23 +80,7 @@ COPY --from=deps /app/public/vendor ./public/vendor
 
 RUN pnpm build
 
-# sharp wasm32 fallback for CPUs without x86-64-v2 (see pnpm-workspace.yaml).
-# File tracing copies the package dir but not the sibling symlink that Node
-# resolution needs from sharp's own pnpm folder, so mirror both explicitly.
-# Unmatched globs make cp fail, which fails the build loudly.
-RUN set -eu; S=.next/standalone/node_modules/.pnpm; mkdir -p "$S"; \
-    for d in node_modules/.pnpm/@img+sharp-wasm32@* node_modules/.pnpm/@emnapi+* node_modules/.pnpm/tslib@*; do cp -a "$d" "$S/"; done; \
-    E=$(basename "$(ls -d node_modules/.pnpm/@emnapi+runtime@* | sort -V | tail -1)"); \
-    T=$(basename "$(ls -d node_modules/.pnpm/tslib@2* | sort -V | tail -1)"); \
-    for s in node_modules/.pnpm/sharp@*; do V=$(basename "$s" | sed 's/^sharp@//; s/_.*//'); W="@img+sharp-wasm32@$V"; \
-      [ -d "node_modules/.pnpm/$W" ] || { echo "missing $W for $s"; exit 1; }; \
-      D="$S/$(basename "$s")/node_modules/@img"; mkdir -p "$D"; \
-      [ -e "$D/sharp-wasm32" ] || ln -s "../../../$W/node_modules/@img/sharp-wasm32" "$D/sharp-wasm32"; \
-      D="$S/$W/node_modules/@emnapi"; mkdir -p "$D"; \
-      [ -e "$D/runtime" ] || ln -s "../../../$E/node_modules/@emnapi/runtime" "$D/runtime"; done; \
-    D="$S/$E/node_modules"; mkdir -p "$D"; \
-    [ -e "$D/tslib" ] || ln -s "../../$T/node_modules/tslib" "$D/tslib"; \
-    ls -la "$S"/sharp@*/node_modules/@img/sharp-wasm32 "$S"/@img+sharp-wasm32@*/node_modules/@emnapi/ "$S/$E/node_modules/"
+# ---- Stage 4: Runner ----
 FROM node:22-alpine AS runner
 
 ARG ALPINE_MIRROR=""
@@ -124,8 +108,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Fail the build, not the deploy, if the standalone tree lost sharp/libvips.
-RUN node -e "require('sharp'); console.log('sharp loads OK')" && \
-    node -e "const p=require('path');const d=p.dirname(require.resolve('sharp'));const w=require.resolve('@img/sharp-wasm32/sharp.node',{paths:[d]});require(w);console.log('sharp wasm32 fallback OK:',w)"
+RUN node -e "require('sharp'); console.log('sharp loads OK')"
 
 USER nextjs
 

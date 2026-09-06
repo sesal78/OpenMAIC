@@ -40,8 +40,10 @@ an `openai-completions` model so agent runs can execute, `OPENMAIC_PORT` / `TAIL
 sharp 0.35 prebuilt Linux x64 binaries require the x86-64-v2 microarchitecture. The
 Dokploy VM originally ran a generic CPU model, and the agent runner failed at startup
 with `Unsupported CPU`. Fixed on 2026-09-06 by setting the Proxmox VM CPU type to
-`host` and restarting. The image also ships `@img/sharp-wasm32` as a slower automatic
-fallback for hosts without v2 (see `pnpm-workspace.yaml` and the Dockerfile mirror step).
+`host` and restarting. A `@img/sharp-wasm32` fallback was attempted but not shipped: pnpm
+does not install the wasm build for the top-level sharp 0.35.4 from the current lockfile.
+The image build fails fast if sharp cannot load, so a host regression shows up in CI, not
+at runtime.
 
 ## Known-good state (2026-09-06)
 
