@@ -86,10 +86,16 @@ RUN pnpm build
 # Unmatched globs make cp fail, which fails the build loudly.
 RUN set -eu; S=.next/standalone/node_modules/.pnpm; mkdir -p "$S"; \
     for d in node_modules/.pnpm/@img+sharp-wasm32@* node_modules/.pnpm/@emnapi+* node_modules/.pnpm/tslib@*; do cp -a "$d" "$S/"; done; \
-    for s in node_modules/.pnpm/sharp@*; do mkdir -p "$S/$(basename "$s")/node_modules/@img"; \
-      cp -a "$s/node_modules/@img/sharp-wasm32" "$S/$(basename "$s")/node_modules/@img/"; done; \
-    ls -d "$S"/@img+sharp-wasm32@* "$S"/@emnapi+*
-
+    W=$(basename "$(ls -d node_modules/.pnpm/@img+sharp-wasm32@* | head -1)"); \
+    E=$(basename "$(ls -d node_modules/.pnpm/@emnapi+runtime@* | sort -V | tail -1)"); \
+    T=$(basename "$(ls -d node_modules/.pnpm/tslib@2* | sort -V | tail -1)"); \
+    for s in node_modules/.pnpm/sharp@*; do D="$S/$(basename "$s")/node_modules/@img"; mkdir -p "$D"; \
+      [ -e "$D/sharp-wasm32" ] || ln -s "../../../$W/node_modules/@img/sharp-wasm32" "$D/sharp-wasm32"; done; \
+    D="$S/$W/node_modules/@emnapi"; mkdir -p "$D"; \
+    [ -e "$D/runtime" ] || ln -s "../../../$E/node_modules/@emnapi/runtime" "$D/runtime"; \
+    D="$S/$E/node_modules"; mkdir -p "$D"; \
+    [ -e "$D/tslib" ] || ln -s "../../$T/node_modules/tslib" "$D/tslib"; \
+    ls -la "$S"/sharp@*/node_modules/@img/ "$S/$W/node_modules/@emnapi/" "$S/$E/node_modules/"
 # ---- Stage 4: Runner ----
 FROM node:22-alpine AS runner
 
