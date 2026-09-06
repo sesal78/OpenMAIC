@@ -84,7 +84,11 @@ RUN pnpm build
 # File tracing copies the package dir but not the sibling symlink that Node
 # resolution needs from sharp's own pnpm folder, so mirror both explicitly.
 # Unmatched globs make cp fail, which fails the build loudly.
-RUN set -eu; S=.next/standalone/node_modules/.pnpm; mkdir -p "$S"; \n    for d in node_modules/.pnpm/@img+sharp-wasm32@* node_modules/.pnpm/@emnapi+* node_modules/.pnpm/tslib@*; do cp -a "$d" "$S/"; done; \n    for s in node_modules/.pnpm/sharp@*; do mkdir -p "$S/$(basename "$s")/node_modules/@img"; \n      cp -a "$s/node_modules/@img/sharp-wasm32" "$S/$(basename "$s")/node_modules/@img/"; done; \n    ls -d "$S"/@img+sharp-wasm32@* "$S"/@emnapi+*
+RUN set -eu; S=.next/standalone/node_modules/.pnpm; mkdir -p "$S"; \
+    for d in node_modules/.pnpm/@img+sharp-wasm32@* node_modules/.pnpm/@emnapi+* node_modules/.pnpm/tslib@*; do cp -a "$d" "$S/"; done; \
+    for s in node_modules/.pnpm/sharp@*; do mkdir -p "$S/$(basename "$s")/node_modules/@img"; \
+      cp -a "$s/node_modules/@img/sharp-wasm32" "$S/$(basename "$s")/node_modules/@img/"; done; \
+    ls -d "$S"/@img+sharp-wasm32@* "$S"/@emnapi+*
 
 # ---- Stage 4: Runner ----
 FROM node:22-alpine AS runner
