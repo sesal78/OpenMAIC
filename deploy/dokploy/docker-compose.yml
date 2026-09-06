@@ -3,8 +3,10 @@
 # - Image is built off-host by .github/workflows/publish-image.yml and pulled
 #   from GHCR (Dokploy's read-only GHCR registry credential handles the pull).
 # - The app port is published on the host's Tailscale IP only, so nothing on
-#   the public interface (115.69.2.80) or via Traefik can reach it. The stack
-#   is deliberately NOT attached to dokploy-network for the same reason.
+#   the public interface (115.69.2.80) can reach it. Services sit on the
+#   attachable overlay dokploy-network (no Traefik domain is configured, so
+#   Traefik never routes to them); a fresh per-stack bridge network was tried
+#   first but container-to-container TCP timed out on this host.
 # - Server-backed persistence + Pro workbench are compiled into the image
 #   (NEXT_PUBLIC_PERSISTENCE=1, NEXT_PUBLIC_PRO_WORKBENCH_ENABLED=true), so
 #   PERSISTENCE_DEV_TOKEN below MUST equal the NEXT_PUBLIC_PERSISTENCE_TOKEN
@@ -31,6 +33,8 @@ services:
       postgres:
         condition: service_healthy
     mem_limit: 1536m
+    networks:
+      - dokploy-network
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/']
       interval: 30s
@@ -48,12 +52,18 @@ services:
     volumes:
       - openmaic-postgres:/var/lib/postgresql/data
     mem_limit: 512m
+    networks:
+      - dokploy-network
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U openmaic -d openmaic']
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
+
+networks:
+  dokploy-network:
+    external: true
 
 volumes:
   openmaic-data:

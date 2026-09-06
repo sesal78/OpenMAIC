@@ -1,6 +1,6 @@
 # OpenMAIC on Dokploy (Tailscale-only)
 
-Topology: `ghcr.io/sesal78/openmaic:tailnet` + Postgres 16, published on the Dokploy
+Topology: `ghcr.io/sesal78/openmaic:tailnet` + Postgres 16 on the attachable `dokploy-network` overlay (no Traefik domain), published on the Dokploy
 host's Tailscale IP only (`http://100.121.168.67:3300`). No Traefik domain, no public
 exposure.
 
