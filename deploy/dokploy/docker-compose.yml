@@ -1,0 +1,60 @@
+# OpenMAIC on Dokploy, reachable ONLY from the Tailscale tailnet.
+#
+# - Image is built off-host by .github/workflows/publish-image.yml and pulled
+#   from GHCR (Dokploy's read-only GHCR registry credential handles the pull).
+# - The app port is published on the host's Tailscale IP only, so nothing on
+#   the public interface (115.69.2.80) or via Traefik can reach it. The stack
+#   is deliberately NOT attached to dokploy-network for the same reason.
+# - Server-backed persistence + Pro workbench are compiled into the image
+#   (NEXT_PUBLIC_PERSISTENCE=1, NEXT_PUBLIC_PRO_WORKBENCH_ENABLED=true), so
+#   PERSISTENCE_DEV_TOKEN below MUST equal the NEXT_PUBLIC_PERSISTENCE_TOKEN
+#   the image was built with.
+# - Memory caps keep a runaway from starving the ~29 other services on the host.
+
+services:
+  openmaic:
+    image: ghcr.io/sesal78/openmaic:${OPENMAIC_IMAGE_TAG:-tailnet}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://openmaic:${POSTGRES_PASSWORD}@postgres:5432/openmaic
+      - PERSISTENCE_DEV_TOKEN=${PERSISTENCE_DEV_TOKEN}
+      - OPENMAIC_AGENT_RUNTIME_ENABLED=${OPENMAIC_AGENT_RUNTIME_ENABLED:-false}
+      - ACCESS_CODE=${ACCESS_CODE:-}
+    ports:
+      # Tailscale IP of the dokploy host -> container 3000. Tailnet-only by construction.
+      - '${TAILSCALE_BIND_IP:-100.121.168.67}:${OPENMAIC_PORT:-3300}:3000'
+    volumes:
+      - openmaic-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 1536m
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=openmaic
+      - POSTGRES_USER=openmaic
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - openmaic-postgres:/var/lib/postgresql/data
+    mem_limit: 512m
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U openmaic -d openmaic']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  openmaic-data:
+  openmaic-postgres:
