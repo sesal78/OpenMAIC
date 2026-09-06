@@ -125,8 +125,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Fail the build, not the deploy, if the standalone tree lost sharp/libvips.
 RUN node -e "require('sharp'); console.log('sharp loads OK')" && \
-    cd "$(dirname "$(node -p "require.resolve('sharp/package.json')")")" && \
-    node -e "require('@img/sharp-wasm32/sharp.node'); console.log('sharp wasm32 fallback OK')"
+    node -e "const p=require('path');const d=p.dirname(require.resolve('sharp'));const w=require.resolve('@img/sharp-wasm32/sharp.node',{paths:[d]});require(w);console.log('sharp wasm32 fallback OK:',w)"
 
 USER nextjs
 
