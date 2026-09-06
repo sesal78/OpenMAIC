@@ -34,3 +34,17 @@ an `openai-completions` model so agent runs can execute, `OPENMAIC_PORT` / `TAIL
 - HTTPS. Traffic is WireGuard-encrypted on the tailnet, but the browser sees plain
   `http://`, so mic-based features (ASR) that need a secure context won't work until
   `tailscale serve` is added on the host (needs SSH access to the dokploy node).
+
+## Host CPU requirement
+
+sharp 0.35 prebuilt Linux x64 binaries require the x86-64-v2 microarchitecture. The
+Dokploy VM originally ran a generic CPU model, and the agent runner failed at startup
+with `Unsupported CPU`. Fixed on 2026-09-06 by setting the Proxmox VM CPU type to
+`host` and restarting. The image also ships `@img/sharp-wasm32` as a slower automatic
+fallback for hosts without v2 (see `pnpm-workspace.yaml` and the Dockerfile mirror step).
+
+## Known-good state (2026-09-06)
+
+- `/api/health`, `/api/stages`, `/api/agent/sessions` answer 200 over the tailnet.
+- Agent runner logs `[AgentRunner] runner ... started` after boot.
+- Public IP `115.69.2.80:3300` refuses connections.
